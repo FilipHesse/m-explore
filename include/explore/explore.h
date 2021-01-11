@@ -51,6 +51,8 @@
 #include <explore/costmap_client.h>
 #include <explore/frontier_search.h>
 
+#include "std_srvs/Empty.h"
+
 namespace explore
 {
 /**
@@ -90,6 +92,9 @@ private:
   ros::Publisher marker_array_publisher_;
   tf::TransformListener tf_listener_;
 
+  ros::ServiceServer service_start_;
+  ros::ServiceServer service_stop_;
+
   Costmap2DClient costmap_client_;
   actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>
       move_base_client_;
@@ -103,11 +108,21 @@ private:
   ros::Time last_progress_;
   size_t last_markers_count_;
 
+  //Service Callbacks
+  bool start_srv(std_srvs::Empty::Request  &req,
+         std_srvs::Empty::Response &res);
+
+  bool stop_srv(std_srvs::Empty::Request  &req,
+         std_srvs::Empty::Response &res);
+
   // parameters
   double planner_frequency_;
   double potential_scale_, orientation_scale_, gain_scale_;
   ros::Duration progress_timeout_;
   bool visualize_;
+
+  // Flag if node is running
+  bool running_;
 };
 }
 

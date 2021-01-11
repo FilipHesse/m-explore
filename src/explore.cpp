@@ -36,7 +36,6 @@
  *********************************************************************/
 
 #include <explore/explore.h>
-
 #include <thread>
 
 inline static bool operator==(const geometry_msgs::Point& one,
@@ -57,6 +56,7 @@ Explore::Explore()
   , move_base_client_("move_base")
   , prev_distance_(0)
   , last_markers_count_(0)
+  , running_ (true)
 {
   double timeout;
   double min_frontier_size;
@@ -85,6 +85,10 @@ Explore::Explore()
   exploring_timer_ =
       relative_nh_.createTimer(ros::Duration(1. / planner_frequency_),
                                [this](const ros::TimerEvent&) { makePlan(); });
+
+  service_start_ = private_nh_.advertiseService("start", &Explore::start_srv, this);
+  service_stop_ = private_nh_.advertiseService("stop", &Explore::stop_srv, this);
+       
 }
 
 Explore::~Explore()
@@ -218,7 +222,7 @@ void Explore::makePlan()
     prev_distance_ = frontier->min_distance;
   }
   // black list if we've made no progress for a long time
-  if (ros::Time::now() - last_progress_ > progress_timeout_) {
+  if (ros::Time::now() - last_progress_ > progress_timeout_ && running_ ) {
     frontier_blacklist_.push_back(target_position);
     ROS_DEBUG("Adding current goal to black list");
     makePlan();
@@ -275,18 +279,39 @@ void Explore::reachedGoal(const actionlib::SimpleClientGoalState& status,
   // execute via timer to prevent dead lock in move_base_client (this is
   // callback for sendGoal, which is called in makePlan). the timer must live
   // until callback is executed.
+  if (running_)
+  {
   oneshot_ = relative_nh_.createTimer(
       ros::Duration(0, 0), [this](const ros::TimerEvent&) { makePlan(); },
       true);
+  }
+}
+
+bool Explore::start_srv(std_srvs::Empty::Request  &req,
+         std_srvs::Empty::Response &res)
+{
+  start();
+  ROS_DEBUG("Called service start");
+  return true;
+}
+
+bool Explore::stop_srv(std_srvs::Empty::Request  &req,
+         std_srvs::Empty::Response &res)
+{
+  stop();
+  ROS_DEBUG("Called service stop");
+  return true;
 }
 
 void Explore::start()
 {
+  running_ = true;
   exploring_timer_.start();
 }
 
 void Explore::stop()
 {
+  running_ = false;
   move_base_client_.cancelAllGoals();
   exploring_timer_.stop();
   ROS_INFO("Exploration stopped.");
@@ -302,6 +327,7 @@ int main(int argc, char** argv)
     ros::console::notifyLoggerLevelsChanged();
   }
   explore::Explore explore;
+
   ros::spin();
 
   return 0;
