@@ -86,6 +86,8 @@ Explore::Explore()
       relative_nh_.createTimer(ros::Duration(1. / planner_frequency_),
                                [this](const ros::TimerEvent&) { makePlan(); });
 
+  stop();
+
   service_start_ = private_nh_.advertiseService("start", &Explore::start_srv, this);
   service_stop_ = private_nh_.advertiseService("stop", &Explore::stop_srv, this);
        
