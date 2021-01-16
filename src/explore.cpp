@@ -225,8 +225,8 @@ void Explore::makePlan()
   }
   // black list if we've made no progress for a long time
   if (ros::Time::now() - last_progress_ > progress_timeout_ && running_ ) {
-    frontier_blacklist_.push_back(target_position);
-    ROS_DEBUG("Adding current goal to black list");
+    //frontier_blacklist_.push_back(target_position);
+    //ROS_DEBUG("Adding current goal to black list");
     makePlan();
     return;
   }
@@ -273,8 +273,8 @@ void Explore::reachedGoal(const actionlib::SimpleClientGoalState& status,
 {
   ROS_DEBUG("Reached goal with status: %s", status.toString().c_str());
   if (status == actionlib::SimpleClientGoalState::ABORTED) {
-    frontier_blacklist_.push_back(frontier_goal);
-    ROS_DEBUG("Adding current goal to black list");
+    //frontier_blacklist_.push_back(frontier_goal);
+    //ROS_DEBUG("Adding current goal to black list");
   }
 
   // find new goal immediatelly regardless of planning frequency.
